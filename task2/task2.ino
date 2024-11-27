@@ -2,131 +2,77 @@
 #include <HTTPClient.h>
 #include <Update.h>
 
-const char* ssid = "xxxxxx";           // Your Wi-Fi SSID
-const char* password = "xxxxxxx";   // Your Wi-Fi Password
+const char* ssid = "Galaxy A52 832C";        // Your Wi-Fi SSID
+const char* password = "77777777";          // Your Wi-Fi Password
 
-const char* firmwareUrl = "https://xxxxxxxxxxxx.bin";  // URL to the .bin file
-const float currentVersion = 1.0;    // Current firmware version
-const char* versionUrl = "https://xxxxxxxxx";  // URL to version text file
-
+bool buttonPressed = false;
 
 void setup() {
   Serial.begin(115200);
   Serial.println("Booting...");
 
-  // Connect to Wi-Fi
-  WiFi.begin(ssid, password);
+  pinMode(2, OUTPUT);  // Red LED
+  pinMode(4, OUTPUT);  // Green LED
+  pinMode(16, OUTPUT); // Yellow LED
+  pinMode(17, OUTPUT); // Blue LED
+  pinMode(18, INPUT);  // Button
 
-  // Wait for connection
+  WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("");
-  Serial.println("Connected to WiFi");
-
-  // Check for updates on startup
-  checkForUpdates();
+  Serial.println("\nConnected to WiFi");
 }
 
 void loop() {
-  // Your regular code here
-  // For example, periodically check for updates
-  static unsigned long lastCheck = 0;
-  const unsigned long interval = 10000;  // Check every hour (3600000 milliseconds)
+  static bool buttonLastState = HIGH;
 
-  if (millis() - lastCheck > interval) {
-    lastCheck = millis();
-    checkForUpdates();
+  // Check button state
+  bool buttonCurrentState = digitalRead(18);
+  if (buttonLastState == HIGH && buttonCurrentState == LOW) {
+    buttonPressed = true;
+    Serial.println("Button pressed!");
+  } else if (buttonLastState == LOW && buttonCurrentState == HIGH) {
+    if (buttonPressed) {
+      Serial.println("Button released!");
+      performLEDSequence();
+      buttonPressed = false;
+    }
   }
-
+  buttonLastState = buttonCurrentState;
 }
 
-void checkForUpdates() {
-  Serial.println("Checking for firmware updates...");
-
-  HTTPClient http;
-
-  // Fetch the latest version number from the server
-  http.begin(versionUrl);
-  int httpCode = http.GET();
-
-  if (httpCode == HTTP_CODE_OK) {
-    String newVersionStr = http.getString();
-    newVersionStr.trim();  // Remove any whitespace or newline characters
-    float newVersion = newVersionStr.toFloat();
-
-    Serial.print("Current firmware version: ");
-    Serial.println(currentVersion, 2);
-    Serial.print("Available firmware version: ");
-    Serial.println(newVersion, 2);
-
-    if (newVersion > currentVersion) {
-      Serial.println("New firmware available. Starting update...");
-      http.end();  // Close the connection before proceeding
-      downloadAndUpdate();
-    } else {
-      Serial.println("Already on the latest version.");
-    }
-  } else {
-    Serial.print("Failed to check for updates. HTTP error code: ");
-    Serial.println(httpCode);
+void performLEDSequence() {
+  // Blink Red LED 5 times (1 second each)
+  for (int i = 0; i < 5; i++) {
+    digitalWrite(2, HIGH);
+    delay(500);
+    digitalWrite(2, LOW);
+    delay(500);
   }
-  http.end();
-}
 
-void downloadAndUpdate() {
-  HTTPClient http;
-
-  // Begin downloading the new firmware
-  http.begin(firmwareUrl);
-  int httpCode = http.GET();
-
-  if (httpCode == HTTP_CODE_OK) {
-    int contentLength = http.getSize();
-
-    if (contentLength > 0) {
-      bool canBegin = Update.begin(contentLength);
-
-      if (canBegin) {
-        Serial.println("Beginning firmware update...");
-
-        WiFiClient* client = http.getStreamPtr();
-        size_t written = Update.writeStream(*client);
-
-        if (written == contentLength) {
-          Serial.println("Firmware update successfully written.");
-        } else {
-          Serial.print("Only ");
-          Serial.print(written);
-          Serial.print(" out of ");
-          Serial.print(contentLength);
-          Serial.println(" bytes were written. Update failed.");
-          http.end();
-          return;
-        }
-
-        if (Update.end()) {
-          Serial.println("Update finished successfully.");
-          if (Update.isFinished()) {
-            Serial.println("Update successfully completed. Rebooting...");
-            ESP.restart();
-          } else {
-            Serial.println("Update did not complete. Something went wrong.");
-          }
-        } else {
-          Serial.print("Error Occurred. Error #: ");
-          Serial.println(Update.getError());
-        }
-      } else {
-        Serial.println("Not enough space to begin OTA update.");
-      }
-    } else {
-      Serial.println("Content length is not valid.");
-    }
-  } else {
-    Serial.print("Failed to download firmware. HTTP error code: ");
-    Serial.println(httpCode);
+  // Blink Green LED 10 times (0.5 seconds each)
+  for (int i = 0; i < 10; i++) {
+    digitalWrite(4, HIGH);
+    delay(250);
+    digitalWrite(4, LOW);
+    delay(250);
   }
-  http.end();
+
+  // Blink Yellow LED 3 times (3 seconds each)
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(16, HIGH);
+    delay(1500);
+    digitalWrite(16, LOW);
+    delay(1500);
+  }
+
+  // Blink Blue LED 2 times (5 seconds each)
+  for (int i = 0; i < 2; i++) {
+    digitalWrite(17, HIGH);
+    delay(2500);
+    digitalWrite(17, LOW);
+    delay(2500);
+  }
 }
