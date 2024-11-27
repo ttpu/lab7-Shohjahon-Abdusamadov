@@ -2,12 +2,19 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 
-const char* ssid = "xxxxxx";          // Replace with your Wi-Fi SSID
-const char* password = "xxxxxx";  // Replace with your Wi-Fi Password
+const char* ssid = "Galaxy A52 832C";          // Replace with your Wi-Fi SSID
+const char* password = "77777777";            // Replace with your Wi-Fi Password
+
+unsigned long redTimer = 0, greenTimer = 0, yellowTimer = 0, blueTimer = 0;
 
 void setup() {
   Serial.begin(115200);
   Serial.println("Booting...");
+
+  pinMode(2, OUTPUT);  // Red LED
+  pinMode(4, OUTPUT);  // Green LED
+  pinMode(16, OUTPUT); // Yellow LED
+  pinMode(17, OUTPUT); // Blue LED
 
   // Connect to your Wi-Fi network
   WiFi.mode(WIFI_STA);
@@ -22,9 +29,8 @@ void setup() {
 
   // Configure OTA
   ArduinoOTA.setHostname("esp32-ota");   // Optional: Set a custom hostname
-  // ArduinoOTA.setPassword("admin");    // Optional: Set an OTA password
 
-  // OTA Event Handlers (Optional but recommended for debugging)
+  // OTA Event Handlers
   ArduinoOTA.onStart([]() {
     Serial.println("Start updating...");
   });
@@ -43,16 +49,38 @@ void setup() {
     else if (error == OTA_END_ERROR)     Serial.println("End Failed");
   });
 
-  // Start the OTA service
   ArduinoOTA.begin();
-
   Serial.println("Ready for OTA updates.");
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
-
 }
 
 void loop() {
-  // Handle OTA updates
   ArduinoOTA.handle();
+
+  unsigned long currentMillis = millis();
+
+  // Red LED (1 second)
+  if (currentMillis - redTimer >= 1000) {
+    redTimer = currentMillis;
+    digitalWrite(2, !digitalRead(2));
+  }
+
+  // Green LED (0.5 second)
+  if (currentMillis - greenTimer >= 500) {
+    greenTimer = currentMillis;
+    digitalWrite(4, !digitalRead(4));
+  }
+
+  // Yellow LED (3 seconds)
+  if (currentMillis - yellowTimer >= 3000) {
+    yellowTimer = currentMillis;
+    digitalWrite(16, !digitalRead(16));
+  }
+
+  // Blue LED (5 seconds)
+  if (currentMillis - blueTimer >= 5000) {
+    blueTimer = currentMillis;
+    digitalWrite(17, !digitalRead(17));
+  }
 }
