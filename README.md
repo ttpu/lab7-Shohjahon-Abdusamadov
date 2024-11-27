@@ -3,9 +3,9 @@
 
 ## Team N:
 
-* Student 1: name,surname,id
+* Student 1: Shohjahon, Abdusamadov, 14509
 
-* Student 2: name,surname,id
+* Student 2: Abubakr, Sayfuddinov, id
 
 etc...
 
